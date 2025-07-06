@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Billie Eilish - 자막 플레이어</title>
+  <style>
+    body { margin:0; font-family:sans-serif; background:#f5f8fa; color:#232340; }
+    .container { max-width:440px; margin:0 auto; }
+    #player {
+      width:100%;
+      aspect-ratio:16/9;
+      border:none;
+      border-radius:18px;
+      margin-top:12px;
+      box-shadow:0 2px 10px #cdd4e7;
+      position: sticky; top: 0; z-index: 2;
+      background: #000;
+    }
+    #progress { margin:18px 18px 8px 18px; font-size:17px; font-weight:500; text-align:right; }
+    #controls { display:flex; gap:10px; margin:0 18px 14px 18px; }
+    #controls button { font-size:15px; padding:7px 14px; border-radius:10px; border:none; background:#dbeafe; color:#232340; cursor:pointer; }
+    #controls button.active { background:#232340; color:#fff; }
+    #subs { display:flex; flex-direction:column; gap:12px; padding:0 18px 24px 18px; }
+    .sub-row { display:flex; align-items:center; gap:10px; }
+    .sub-btn {
+      flex:1;
+      font-size:18px;
+      padding:16px;
+      border-radius:14px;
+      border:none;
+      background:#e0e7ff;
+      color:#232340;
+      text-align:left;
+      transition:.13s;
+      white-space:normal;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+    .sub-btn:active { background:#a5b4fc; }
+    .sub-btn.learned { background:#a7f3d0; color:#157348; text-decoration:line-through; }
+    .hide-btn { background:transparent; border:none; font-size:19px; cursor:pointer; color:#bbb; }
+    .hide-btn.active { color:#3b3b3b; }
+    .check-btn { background:transparent; border:none; font-size:20px; cursor:pointer; margin-left:3px; color:#b4e197;}
+    .check-btn.checked { color:#22c55e; }
+    @media (max-width: 520px) {
+      #player { border-radius:9px;}
+      .sub-btn { font-size:17px; padding:12px;}
+      #progress { font-size:16px;}
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <iframe id="player" src="https://www.youtube.com/embed/MzMgn1IzEgw?enablejsapi=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  <div id="progress"></div>
+  <div id="controls">
+    <button id="show-all" class="active">전체 보기</button>
+    <button id="show-learned">외웠음 보기</button>
+  </div>
+  <div id="subs"></div>
+</div>
+<script>
+// Billie Eilish 전체 자막
+const SUBS = [
+  { text: "But I need to confess", start: 0.51, end: 3.13 },
+  { text: "I told you a lie(told you a lie)", start: 3.16, end: 8.5 },
+  { text: "When I said you(I said you)", start: 8.62, end: 13.76 },
+  { text: "You were the love of my life", start: 15.49, end: 23.14 },
+  { text: "The love of my life", start: 24.5, end: 28.21 },
+  { text: "Man I have this song on repeat lately", start: 31.92, end: 33.9 },
+  { text: "so beautiful right.", start: 33.96, end: 35.25 },
+  { text: "Your English teacher definitely never taught you the expressions that", start: 35.89, end: 38.6 },
+  { text: "Billie eilish uses in the speech that we're going to be watch it today", start: 38.63, end: 41.97 },
+  { text: "but guess what", start: 42.34, end: 43.26 },
+  { text: "that's exactly how natives really speak", start: 43.5, end: 45.63 },
+  { text: "when we're being authentic", start: 45.75, end: 47.15 },
+  { text: "today you're getting a master class in real unscripted English", start: 47.23, end: 51.03 },
+  { text: "that no textbook will ever teach you", start: 51.05, end: 52.88 },
+  { text: "Guys", start: 76.51, end: 77.13 },
+  { text: "i'm on predators zone", start: 77.18, end: 78.42 },
+  { text: "you ever taken that.", start: 78.67, end: 79.75 },
+  { text: "No for real.", start: 81.24, end: 82.19 },
+  { text: "I've had no voice, Margot, all week. Larygitis", start: 83.65, end: 87.94 },
+  { text: "and I'm on prednisone. it's a steroid.", start: 88.18, end: 91.03 },
+  { text: "Last time i was on it i", start: 92.34, end: 93.46 },
+  { text: "I threw my phone and shattered a mirror.", start: 93.49, end: 95.99 },
+  { text: "And this time", start: 96.87, end: 97.71 },
+  { text: "i be crying... and.", start: 98.04, end: 100.57 },
+  { text: "I don't like doing speeches", start: 102.64, end: 104.52 },
+  { text: "because i would rather give my platform to people", start: 104.54, end: 107.54 },
+  { text: "that know what the fuck they're talking about", start: 107.57, end: 109.29 },
+  { text: "i was so young", start: 109.72, end: 111.0 },
+  { text: "and i'm still young but", start: 111.9, end: 113.55 },
+  { text: "coming up and like.", start: 113.97, end: 115.81 },
+  { text: "Being fifteen.", start: 116.13, end: 117.52 },
+  { text: "Like it's really", start: 120.93, end: 122.56 },
+  { text: "Fucking me up a little bit to think about.", start: 122.7, end: 124.89 },
+  { text: "Like i'm zooted it right now", start: 125.17, end: 126.78 },
+  { text: "sorry.", start: 126.87, end: 127.51 },
+  { text: "But it's really hard, it's hard.", start: 134.77, end: 137.02 },
+  { text: "It's really hard to be a woman out here guys.", start: 139.58, end: 142.38 },
+  { text: "It's hard", start: 142.97, end: 144.22 },
+  { text: "I feel I've said this a lot recently", start: 146.87, end: 149.11 },
+  { text: "so if anybody's heard me say this I'm sorry", start: 149.13, end: 151.03 },
+  { text: "if i sound like a broken record but i", start: 151.06, end: 153.02 },
+  { text: "have never felt truly like a woman", start: 153.21, end: 155.54 },
+  { text: "and I've spent a lot of my life", start: 155.58, end: 157.98 },
+  { text: "not feeling like i.. Fit in to being a woman.", start: 158.94, end: 163.99 },
+  { text: "We love Billie because she doesn't pretend", start: 168.78, end: 170.55 },
+  { text: "she's not trying to seem perfect", start: 170.91, end: 172.53 },
+  { text: "she's sharing her actual human experience", start: 172.89, end: 175.44 },
+  { text: "that includes side effects from medication, being overwhelmed.", start: 175.64, end: 179.04 },
+  { text: "and yes", start: 179.11, end: 179.94 },
+  { text: "crying onstage", start: 180.06, end: 181.2 },
+  { text: "that might have been a bit difficult to understand", start: 181.44, end: 183.57 },
+  { text: "but now we're going to unpack the entire speech", start: 183.76, end: 186.42 },
+  { text: "phrase by phrase.", start: 186.45, end: 187.59 },
+  { text: "so Billy starts by explaining she's on prednisone", start: 211.62, end: 214.42 },
+  { text: "which is a type of steroid prescribed to reduce inflammation", start: 214.49, end: 217.14 },
+  { text: "often when you're really sick", start: 217.5, end: 218.91 },
+  { text: "like she is with aryngitis", start: 219.05, end: 220.54 },
+  { text: "inflammation of the vocal cords", start: 220.79, end: 222.36 },
+  { text: "No for real.", start: 222.51, end: 223.33 },
+  { text: "This is a common expression to emphasize sincerity or truthfulness", start: 224.93, end: 228.31 },
+  { text: "it's like saying", start: 228.56, end: 229.33 },
+  { text: "\"honestly i mean it\"", start: 229.43, end: 230.7 },
+  { text: "last time i was on it", start: 230.89, end: 231.96 },
+  { text: "I threw my phone and shattered a mirror.", start: 231.98, end: 234.7 },
+  { text: "To be on something here means to be taking medication", start: 235.49, end: 238.11 },
+  { text: "so Billy says that in the past", start: 238.46, end: 239.81 },
+  { text: "when she took the steroid she shattered a mirror.", start: 239.84, end: 242.13 },
+  { text: "this is a shattered mirror.", start: 242.46, end: 243.66 },
+  { text: "Now to shatter means to break something into small pieces", start: 244.29, end: 247.16 },
+  { text: "by the way if you're emotionally broken", start: 247.41, end: 249.24 },
+  { text: "you can use the word shattered figuratively", start: 249.42, end: 251.1 },
+  { text: "to describe this feeling of being devastated", start: 251.12, end: 253.18 },
+  { text: "check out this example", start: 253.28, end: 254.16 },
+  { text: "you were there", start: 254.72, end: 255.22 },
+  { text: "i know i was there thank you for bringing up that", start: 255.25, end: 257.15 },
+  { text: "very painful memory.", start: 257.24, end: 259.18 },
+  { text: "Okay.", start: 261.78, end: 262.9 },
+  { text: "Can i just draw on this?", start: 265.05, end: 267.52 },
+  { text: "Sure", start: 267.75, end: 268.17 },
+  { text: "why not shudder just like i am.", start: 268.29, end: 270.57 },
+  { text: "In this time", start: 298.84, end: 299.64 },
+  { text: "i be crying", start: 299.93, end: 300.69 },
+  { text: "now this is some odd grammatical use", start: 301.08, end: 303.12 },
+  { text: "instead of saying i am crying", start: 303.4, end: 305.31 },
+  { text: "Billy says i be crying.", start: 305.32, end: 307.21 },
+  { text: "This is a native slang use of grammar", start: 307.37, end: 309.42 },
+  { text: "you might find this use the grammar", start: 309.54, end: 311.01 },
+  { text: "especially in rap music or by young Americans like billie.", start: 311.03, end: 314.14 },
+  { text: "I don't like doing speeches", start: 314.27, end: 316.12 },
+  { text: "because i would rather give my platform to people", start: 316.14, end: 319.16 },
+  { text: "that know what the fuck they're talking about", start: 319.17, end: 320.91 },
+  { text: "Billy's saying she would prefer using her influence to let other people speak.", start: 321.24, end: 324.7 },
+  { text: "Platform here it means your audience and influence", start: 324.84, end: 327.21 },
+  { text: "the opportunity that allows you to share an important message.", start: 327.49, end: 330.17 },
+  { text: "In politics", start: 330.57, end: 331.35 },
+  { text: "a platform is a set of goals and proposals", start: 331.53, end: 333.53 },
+  { text: "that a political party or candidate promises to support if elected", start: 333.54, end: 336.6 },
+  { text: "it tells voters what the party or candidate stands for", start: 337.05, end: 339.69 },
+  { text: "check out these examples", start: 340.0, end: 341.1 },
+  { text: "are you saying actors can't change the world?", start: 341.38, end: 343.53 },
+  { text: "i guess nobody bothered to tell Sharon stone", start: 344.02, end: 346.8 },
+  { text: "look i always knew i could make a difference", start: 347.09, end: 349.47 },
+  { text: "and i would finally have my platform so let's have a little..", start: 349.69, end: 352.59 },
+  { text: "what do you think.", start: 352.65, end: 353.8 },
+  { text: "Nice colors.", start: 354.3, end: 355.43 },
+  { text: "You got a platform? schools.", start: 356.58, end: 358.8 },
+  { text: "Though that'd be the education mayor", start: 359.15, end: 360.48 },
+  { text: "and when Billy says", start: 360.63, end: 361.68 },
+  { text: "give my platform to people that know what the fuck they're talking about", start: 361.86, end: 364.98 },
+  { text: "it's an emphatic way to refer to experts or experienced wise people", start: 365.2, end: 369.03 },
+  { text: "so she's saying that she would prefer to let an expert on feminism for example", start: 369.15, end: 372.99 },
+  { text: "share their wisdom rather than herself", start: 373.17, end: 374.91 },
+  { text: "who does not have expertise on the topic.", start: 375.06, end: 377.18 },
+  { text: "This kind of swearing isn't uncommon in passionate speeches", start: 377.43, end: 380.13 },
+  { text: "but is very contextual", start: 380.4, end: 381.66 },
+  { text: "and we're going to dig more into that in the second part of the lesson", start: 381.74, end: 384.69 },
+  { text: "so stick around", start: 384.96, end: 385.89 },
+  { text: "And i think for a couple of years", start: 707.46, end: 708.64 },
+  { text: "because of that insecurity", start: 708.66, end: 710.12 },
+  { text: "i became almost like very pick me about it", start: 710.13, end: 712.5 },
+  { text: "and i'd be like well i'm not like other girls", start: 712.86, end: 714.89 },
+  { text: "because i don't you know do this and this", start: 714.9, end: 716.79 },
+  { text: "and I've grown to be very resentful of that period of time", start: 716.81, end: 719.6 },
+  { text: "because i'm.", start: 719.61, end: 720.85 },
+  { text: "I'm so much more interested in", start: 720.9, end: 722.95 },
+  { text: "being like like other girls because other girls are fucking tight", start: 722.96, end: 726.21 },
+  { text: "and i love women.", start: 726.68, end: 729.76 },
+  { text: "That sounds kind of fucked up but i have a lot of.", start: 730.05, end: 733.06 },
+  { text: "A lot of internalized misogyny inside of me", start: 733.25, end: 736.59 },
+  { text: "and i find it coming out", start: 736.8, end: 738.33 },
+  { text: "in Places i don't want it to", start: 738.63, end: 741.36 },
+  { text: "and i have to say with like full transparency", start: 741.84, end: 744.58 },
+  { text: "i feel very grateful to be a woman right now.", start: 744.59, end: 749.37 },
+  { text: "I feel very proud", start: 753.81, end: 755.23 },
+  { text: "and i feel very.", start: 756.02, end: 757.43 },
+  { text: "Honored to be here.", start: 758.94, end: 760.6 },
+];
+
+const STORAGE_KEY = 'subStatus_billie_yt';
+let status = {};
+
+function loadStatus() {
+  try {
+    status = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    for (let i=0; i<SUBS.length; i++) {
+      if (!status[i]) status[i]={hide:false,learned:false};
+    }
+  } catch { status = {}; }
+}
+function saveStatus() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(status));
+}
+
+function renderSubs(view='all') {
+  const subsDiv = document.getElementById('subs');
+  subsDiv.innerHTML = '';
+  let learned = 0;
+  SUBS.forEach((sub, idx) => {
+    if (view==='learned' && !status[idx].learned) return;
+    if (status[idx].learned) learned++;
+    const row = document.createElement('div');
+    row.className = 'sub-row';
+
+    const btn = document.createElement('button');
+    btn.className = 'sub-btn' + (status[idx].learned ? ' learned':'');
+    btn.innerText = status[idx].hide ? '🙈' : sub.text;
+    btn.onclick = () => playSub(idx);
+
+    const hideBtn = document.createElement('button');
+    hideBtn.className = 'hide-btn' + (status[idx].hide ? ' active' : '');
+    hideBtn.innerText = '🙈';
+    hideBtn.title = status[idx].hide ? '자막 보이기' : '자막 숨기기';
+    hideBtn.onclick = (e) => {
+      status[idx].hide = !status[idx].hide;
+      saveStatus(); renderSubs(currentView);
+      e.stopPropagation();
+    };
+
+    const checkBtn = document.createElement('button');
+    checkBtn.className = 'check-btn' + (status[idx].learned ? ' checked':'');
+    checkBtn.innerText = '✔️';
+    checkBtn.title = status[idx].learned ? '외웠음 해제' : '외웠음';
+    checkBtn.onclick = (e) => {
+      status[idx].learned = !status[idx].learned;
+      saveStatus(); renderSubs(currentView);
+      e.stopPropagation();
+    };
+
+    row.appendChild(btn);
+    row.appendChild(hideBtn);
+    row.appendChild(checkBtn);
+    subsDiv.appendChild(row);
+  });
+  let percent = SUBS.length ? Math.round(learned/SUBS.length*100) : 0;
+  document.getElementById('progress').innerHTML = 
+    `진행률: <b>${percent}%</b> (${learned}/${SUBS.length})`;
+}
+
+let player, timeoutId, currentView = 'all';
+function onYouTubeIframeAPIReady() {
+  player = new YT.Player('player');
+}
+function playSub(idx) {
+  if (!player || !player.seekTo) return;
+  const {start, end} = SUBS[idx];
+  player.seekTo(start, true);
+  player.playVideo();
+  if(timeoutId) clearTimeout(timeoutId);
+  timeoutId = setTimeout(()=>{player.pauseVideo();}, (end-start)*1000);
+}
+
+document.getElementById('show-all').onclick = function() {
+  currentView='all';
+  this.classList.add('active');
+  document.getElementById('show-learned').classList.remove('active');
+  renderSubs('all');
+};
+document.getElementById('show-learned').onclick = function() {
+  currentView='learned';
+  this.classList.add('active');
+  document.getElementById('show-all').classList.remove('active');
+  renderSubs('learned');
+};
+
+const tag = document.createElement('script');
+tag.src = "https://www.youtube.com/iframe_api";
+document.body.appendChild(tag);
+
+loadStatus();
+renderSubs(currentView);
+</script>
+</body>
+</html>
